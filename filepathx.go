@@ -23,18 +23,32 @@ func Glob(pattern string) ([]string, error) {
 	return Globs(strings.Split(pattern, "**")).Expand()
 }
 
-// Expand finds matches for the provided Globs.
-func (globs Globs) Expand() ([]string, error) {
+const replaceIfAny = "[]*"
 
+var replacements [][2]string
+
+func init() {
 	// Escape `filepath.Match` syntax.
 	// On Unix escaping works with `\\`,
-	// on windows it is disabled, therefore
+	// on Windows it is disabled, therefore
 	// replace it by '?' := any character.
-	var escapeChar string = "\\"
 	if runtime.GOOS == "windows" {
-		escapeChar = "?"
+		replacements = [][2]string{
+			// Windows cannot have * in file names.
+			{"[", "?"},
+			{"]", "?"},
+		}
+	} else {
+		replacements = [][2]string{
+			{"*", "\\*"},
+			{"[", "\\["},
+			{"]", "\\]"},
+		}
 	}
+}
 
+// Expand finds matches for the provided Globs.
+func (globs Globs) Expand() ([]string, error) {
 	var matches = []string{""} // accumulate here
 	for _, glob := range globs {
 		if glob == "" {
@@ -45,16 +59,16 @@ func (globs Globs) Expand() ([]string, error) {
 		var hits []string
 		var hitMap = map[string]bool{}
 		for _, match := range matches {
+			if strings.ContainsAny(match, replaceIfAny) {
+				for _, sr := range replacements {
+					match = strings.ReplaceAll(match, sr[0], sr[1])
+				}
+			}
+
 			paths, err := filepath.Glob(filepath.Join(match, glob))
 			if err != nil {
 				return nil, err
 			}
-
-			match = strings.ReplaceAll(
-				strings.ReplaceAll(
-					strings.ReplaceAll(match, "*", escapeChar+"*"),
-					"[", escapeChar+"["),
-				"]", escapeChar+"]")
 
 			for _, path := range paths {
 				err = filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
