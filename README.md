@@ -2,14 +2,16 @@
 
 > A small `filepath` extension library that supports double star globbling.
 
+Forked from https://github.com/yargevad/filepathx which appears dead.
+
 ## Documentation
 
-GoDoc: <https://pkg.go.dev/github.com/yargevad/filepathx>
+GoDoc: <https://pkg.go.dev/github.com/klauspost/filepathx>
 
 ## Install
 
 ```bash
-go get github.com/yargevad/filepathx
+go get github.com/klauspost/filepathx
 ```
 
 ## Usage Example
@@ -24,7 +26,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/yargevad/filepathx"
+	"github.com/klauspost/filepathx"
 )
 
 func main() {
