@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/yargevad/filepathx"
+	"github.com/klauspost/filepathx"
 )
 
 func main() {
