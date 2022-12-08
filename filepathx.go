@@ -49,7 +49,6 @@ func init() {
 
 // Expand finds matches for the provided Globs.
 func (globs Globs) Expand() ([]string, error) {
-
 	var matches = []string{""} // accumulate here
 	for _, glob := range globs {
 		if glob == "" {
@@ -66,10 +65,11 @@ func (globs Globs) Expand() ([]string, error) {
 				}
 			}
 
-			paths, err := filepath.Glob(match + glob)
+			paths, err := filepath.Glob(filepath.Join(match, glob))
 			if err != nil {
 				return nil, err
 			}
+
 			for _, path := range paths {
 				err = filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
 					if err != nil {

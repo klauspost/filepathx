@@ -15,7 +15,7 @@ jobs:
     strategy:
       matrix:
         go-version: [1.18.x, 1.19.x]
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
     env:
       CGO_ENABLED: 0
     runs-on: ${{ matrix.os }}
@@ -33,8 +33,22 @@ jobs:
     - name: Test
       run: go test -v ./...
       
-    - name: Vet
-      run: go vet -v ./...
 
-    - name: fmt
-      run: diff <(gofmt -d .) <(printf "")
+  lint-vet:
+    env:
+      CGO_ENABLED: 0
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.19.x
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Vet
+        run: go vet -v ./...
+
+      - name: fmt
+        run: diff <(gofmt -d .) <(printf "")
