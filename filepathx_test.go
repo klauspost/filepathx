@@ -2,13 +2,14 @@ package filepathx
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 )
 
 func cleanup(t *testing.T) {
 	err := os.RemoveAll("./a")
 	if err != nil {
-		t.Fatalf("os.Removall: %s", err)
+		t.Fatalf("os.Removeall: %s", err)
 	}
 }
 
@@ -19,6 +20,7 @@ func TestGlob_ZeroDoubleStars_oneMatch(t *testing.T) {
 	if err != nil {
 		t.Fatalf("os.MkdirAll: %s", err)
 	}
+	defer cleanup(t)
 	matches, err := Glob("./*/*/*.d")
 	if err != nil {
 		t.Fatalf("Glob: %s", err)
@@ -30,7 +32,6 @@ func TestGlob_ZeroDoubleStars_oneMatch(t *testing.T) {
 	if matches[0] != expected {
 		t.Fatalf("matched [%s], expected [%s]", matches[0], expected)
 	}
-	cleanup(t)
 }
 
 func TestGlob_OneDoubleStar_oneMatch(t *testing.T) {
@@ -40,6 +41,7 @@ func TestGlob_OneDoubleStar_oneMatch(t *testing.T) {
 	if err != nil {
 		t.Fatalf("os.MkdirAll: %s", err)
 	}
+	defer cleanup(t)
 	matches, err := Glob("./**/*.f")
 	if err != nil {
 		t.Fatalf("Glob: %s", err)
@@ -51,7 +53,6 @@ func TestGlob_OneDoubleStar_oneMatch(t *testing.T) {
 	if matches[0] != expected {
 		t.Fatalf("matched [%s], expected [%s]", matches[0], expected)
 	}
-	cleanup(t)
 }
 
 func TestGlob_OneDoubleStar_twoMatches(t *testing.T) {
@@ -61,6 +62,7 @@ func TestGlob_OneDoubleStar_twoMatches(t *testing.T) {
 	if err != nil {
 		t.Fatalf("os.MkdirAll: %s", err)
 	}
+	defer cleanup(t)
 	matches, err := Glob("./a/**/*.*")
 	if err != nil {
 		t.Fatalf("Glob: %s", err)
@@ -74,7 +76,6 @@ func TestGlob_OneDoubleStar_twoMatches(t *testing.T) {
 			t.Fatalf("matched [%s], expected [%s]", match, expected[i])
 		}
 	}
-	cleanup(t)
 }
 
 func TestGlob_TwoDoubleStars_oneMatch(t *testing.T) {
@@ -84,6 +85,7 @@ func TestGlob_TwoDoubleStars_oneMatch(t *testing.T) {
 	if err != nil {
 		t.Fatalf("os.MkdirAll: %s", err)
 	}
+	defer cleanup(t)
 	matches, err := Glob("./**/b/**/*.f")
 	if err != nil {
 		t.Fatalf("Glob: %s", err)
@@ -95,7 +97,6 @@ func TestGlob_TwoDoubleStars_oneMatch(t *testing.T) {
 	if matches[0] != expected {
 		t.Fatalf("matched [%s], expected [%s]", matches[0], expected)
 	}
-	cleanup(t)
 }
 
 func TestExpand_DirectCall_emptySlice(t *testing.T) {
@@ -107,7 +108,6 @@ func TestExpand_DirectCall_emptySlice(t *testing.T) {
 	if len(matches) != 0 {
 		t.Fatalf("got %d matches, expected 0", len(matches))
 	}
-	cleanup(t)
 }
 
 func TestExpand_TwoDoubleStarts_escapeCharactersInPath(t *testing.T) {
@@ -117,18 +117,41 @@ func TestExpand_TwoDoubleStarts_escapeCharactersInPath(t *testing.T) {
 	if err != nil {
 		t.Fatalf("os.MkdirAll: %s", err)
 	}
+	defer cleanup(t)
 	matches, err := Glob("./a/**/*.*")
 	if err != nil {
 		t.Fatalf("Glob: %s", err)
 	}
-	if len(matches) != 2 {
-		t.Fatalf("got %d matches, expected 2", len(matches))
+	expected := []string{filepath.Join("a", "b", "c.d"), filepath.Join("a", "b", "c.d", "[")}
+	if len(matches) != len(expected) {
+		t.Fatalf("got %d matches (%v), expected 2", len(matches), matches)
 	}
-	expected := []string{"a/b/c.d", "a/b/c.d/["}
 	for i, match := range matches {
 		if match != expected[i] {
 			t.Fatalf("matched [%s], expected [%s]", match, expected[i])
 		}
 	}
-	cleanup(t)
+}
+
+func TestExpand_TwoDoubleStarts_escapeCharactersInPath2(t *testing.T) {
+	// test a single double-star
+	path := "./a/b/c.d/]"
+	err := os.MkdirAll(path, 0755)
+	if err != nil {
+		t.Fatalf("os.MkdirAll: %s", err)
+	}
+	defer cleanup(t)
+	matches, err := Glob("./a/**/*.*")
+	if err != nil {
+		t.Fatalf("Glob: %s", err)
+	}
+	expected := []string{filepath.Join("a", "b", "c.d"), filepath.Join("a", "b", "c.d", "]")}
+	if len(matches) != len(expected) {
+		t.Fatalf("got %d matches (%v), expected 2", len(matches), matches)
+	}
+	for i, match := range matches {
+		if match != expected[i] {
+			t.Fatalf("matched [%s], expected [%s]", match, expected[i])
+		}
+	}
 }
